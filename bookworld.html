@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookList+</title>
+<link rel="icon" href="data:,">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f5f5; color:#333; transition: background 0.3s, color 0.3s;}
+  body.dark{background:#121212;color:#eee;}
+  nav.main-nav{display:flex;justify-content:space-between;align-items:center;padding:15px 30px;background:#667eea;color:white;}
+  nav .logo{font-size:1.5em;font-weight:bold;cursor:pointer;}
+  nav .nav-links a{margin-left:20px;color:white;text-decoration:none;font-weight:500;cursor:pointer;}
+  nav .nav-links a.active{text-decoration:underline;}
+  #themeToggle{margin-left:20px;padding:5px 10px;cursor:pointer;border-radius:5px;border:none;background:#fff;color:#667eea;font-weight:bold;}
+  .container{padding:20px;}
+  .section{margin-bottom:40px;}
+  .section h2{margin-bottom:15px;color:#667eea;}
+  body.dark .section h2{color:#81a1c1;}
+  .book-row{display:flex;overflow-x:auto;gap:15px;padding-bottom:10px;scroll-behavior:smooth;}
+  .book-row::-webkit-scrollbar{display:none;}
+  .book-card{min-width:180px;background:white;border-radius:10px;overflow:hidden;cursor:pointer;position:relative;transition:transform 0.3s,box-shadow 0.3s;}
+  body.dark .book-card{background:#1e1e1e;color:#eee;}
+  .book-card img{width:180px;height:270px;object-fit:cover;display:block;}
+  .book-card .info{position:absolute;bottom:0;background:rgba(0,0,0,0.7);color:white;width:100%;padding:10px;font-size:0.85em;opacity:0;transition:opacity 0.3s;}
+  .book-card:hover{transform:translateY(-5px);box-shadow:0 10px 20px rgba(0,0,0,0.3);}
+  .book-card:hover .info{opacity:1;}
+  .search-bar{display:flex;align-items:center;margin-bottom:20px;gap:10px;}
+  #searchInput{flex:1;padding:10px 15px;border-radius:20px;border:1px solid #667eea;outline:none;}
+  #searchBtn{padding:10px 15px;border:none;background:#667eea;color:white;border-radius:20px;cursor:pointer;}
+  .browse-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;}
+  .browse-filters button{padding:8px 15px;border:none;border-radius:20px;background:#667eea;color:white;cursor:pointer;transition:0.3s;}
+  .browse-filters button.active{background:#764ba2;}
+  .sort-select{margin-bottom:15px;padding:5px 10px;border-radius:5px;border:1px solid #667eea;}
+  .mylist-card{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px;border-radius:10px;background:white;}
+  body.dark .mylist-card{background:#1e1e1e;}
+  .mylist-card img{width:60px;height:90px;object-fit:cover;border-radius:5px;}
+  .status-select{padding:5px 10px;border-radius:5px;border:1px solid #667eea;}
+  .loading{display:flex;justify-content:center;align-items:center;margin:20px 0;}
+  .spinner{width:40px;height:40px;border:5px solid #f3f3f3;border-top:5px solid #667eea;border-radius:50%;animation:spin 1s linear infinite;}
+  @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<nav class="main-nav">
+  <div class="logo" onclick="showSection('home')">BookList+</div>
+  <div class="nav-links">
+    <a class="nav-link active" onclick="showSection('home')">Home</a>
+    <a class="nav-link" onclick="showSection('browse')">Browse</a>
+    <a class="nav-link" onclick="showSection('mylist')">My List</a>
+    <button id="themeToggle">🌞</button>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search books by title, author, genre...">
+    <button id="searchBtn">Search</button>
+  </div>
+
+  <!-- Home Section -->
+  <div id="home" class="section">
+    <h2>🔥 Trending</h2>
+    <div class="book-row" id="trendingRow"></div>
+
+    <h2>⭐ Top Rated</h2>
+    <div class="book-row" id="topRow"></div>
+
+    <h2>🌟 Popular</h2>
+    <div class="book-row" id="popularRow"></div>
+  </div>
+
+  <!-- Browse Section -->
+  <div id="browse" class="section" style="display:none;">
+    <h2>📂 Browse</h2>
+    <div class="browse-filters" id="genreFilters"></div>
+    <select id="sortSelect" class="sort-select">
+      <option value="popular">Popular</option>
+      <option value="top">Top Rated</option>
+      <option value="asc">Title Ascending</option>
+      <option value="desc">Title Descending</option>
+      <option value="all">All Books</option>
+    </select>
+    <div class="book-row" id="browseRow"></div>
+  </div>
+
+  <!-- My List Section -->
+  <div id="mylist" class="section" style="display:none;">
+    <h2>📚 My List</h2>
+    <div id="mylistContainer"></div>
+  </div>
+</div>
+
+<script>
+const sections = ['home','browse','mylist'];
+function showSection(sec){
+  sections.forEach(s=>document.getElementById(s).style.display='none');
+  document.getElementById(sec).style.display='block';
+  document.querySelectorAll('.nav-link').forEach(link=>link.classList.remove('active'));
+  if(sec==='home') document.querySelector('.nav-link[onclick*="home"]').classList.add('active');
+  if(sec==='browse') document.querySelector('.nav-link[onclick*="browse"]').classList.add('active');
+  if(sec==='mylist') document.querySelector('.nav-link[onclick*="mylist"]').classList.add('active');
+}
+
+const themeBtn=document.getElementById('themeToggle');
+themeBtn.onclick=()=>{
+  document.body.classList.toggle('dark');
+  themeBtn.textContent=document.body.classList.contains('dark')?'🌙':'🌞';
+}
+
+// Genres
+const genres=['Fantasy','Science Fiction','Romance','Mystery','Thriller','Horror','Adventure','Historical','Comics','Biography'];
+const genreFilters=document.getElementById('genreFilters');
+genres.forEach(g=>{
+  const btn=document.createElement('button');
+  btn.textContent=g;
+  btn.onclick=()=>{fetchBrowse(g);};
+  genreFilters.appendChild(btn);
+});
+
+// Fetch books
+async function fetchBooks(query,limit=10){
+  try{
+    const res=await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}`);
+    const data=await res.json();
+    return data.docs;
+  }catch(e){console.log(e);return[];}
+}
+
+// Create book card
+function createBookCard(book){
+  const div=document.createElement('div');
+  div.className='book-card';
+  const cover=book.cover_i?`https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`:'https://via.placeholder.com/180x270?text=No+Cover';
+  div.innerHTML=`<img src="${cover}" alt="${book.title}">
+    <div class="info">
+      <strong>${book.title}</strong><br>
+      ${book.author_name?book.author_name.join(', '):'Unknown'}<br>
+      <button onclick="addToList(event,'${book.key}','${book.title.replace(/'/g,"\\'")}','${cover}')">Add to My List</button>
+    </div>`;
+  div.onclick=()=>{window.open(`https://openlibrary.org${book.key}`,'_blank');};
+  return div;
+}
+
+// Populate home
+async function populateHome(){
+  const trending=await fetchBooks('bestseller',10);
+  const topRated=await fetchBooks('top rated',10);
+  const popular=await fetchBooks('popular',10);
+  trending.forEach(b=>document.getElementById('trendingRow').appendChild(createBookCard(b)));
+  topRated.forEach(b=>document.getElementById('topRow').appendChild(createBookCard(b)));
+  popular.forEach(b=>document.getElementById('popularRow').appendChild(createBookCard(b)));
+}
+populateHome();
+
+// Browse
+async function fetchBrowse(genre){
+  document.getElementById('browseRow').innerHTML='';
+  const books=await fetchBooks(genre,20);
+  books.forEach(b=>document.getElementById('browseRow').appendChild(createBookCard(b)));
+}
+
+// My List
+function getMyList(){return JSON.parse(localStorage.getItem('mylist')||'[]');}
+function saveMyList(list){localStorage.setItem('mylist',JSON.stringify(list));}
+function addToList(e,key,title,cover){
+  e.stopPropagation();
+  const list=getMyList();
+  if(list.some(b=>b.key===key)) return alert('Already in list');
+  list.push({key,title,cover,status:'Planning'});
+  saveMyList(list);
+  renderMyList();
+}
+function changeStatus(index,status){
+  const list=getMyList();
+  list[index].status=status;
+  saveMyList(list);
+  renderMyList();
+}
+function removeFromList(index){
+  const list=getMyList();
+  list.splice(index,1);
+  saveMyList(list);
+  renderMyList();
+}
+function renderMyList(){
+  const container=document.getElementById('mylistContainer');
+  container.innerHTML='';
+  getMyList().forEach((b,i)=>{
+    const div=document.createElement('div');
+    div.className='mylist-card';
+    div.innerHTML=`<img src="${b.cover}">
+      <div>
+        <strong>${b.title}</strong><br>
+        <select class="status-select" onchange="changeStatus(${i},this.value)">
+          <option value="Planning" ${b.status==='Planning'?'selected':''}>Planning</option>
+          <option value="Reading" ${b.status==='Reading'?'selected':''}>Reading</option>
+          <option value="Completed" ${b.status==='Completed'?'selected':''}>Completed</option>
+        </select>
+        <button onclick="removeFromList(${i})">Remove</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+renderMyList();
+
+// Search
+document.getElementById('searchBtn').onclick=async()=>{
+  const query=document.getElementById('searchInput').value;
+  if(!query)return;
+  showSection('browse');
+  document.getElementById('browseRow').innerHTML='';
+  const books=await fetchBooks(query,20);
+  books.forEach(b=>document.getElementById('browseRow').appendChild(createBookCard(b)));
+};
+</script>
+</body>
+</html>
