@@ -12,19 +12,24 @@ body {
   padding: 10px 30px;
 }
 
-.navbar .logo {
+.logo {
   font-weight: bold;
   font-size: 1.3em;
 }
 
-.navbar nav a {
-  margin: 0 10px;
+nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+nav a {
   text-decoration: none;
   color: #333;
 }
 
-.navbar input {
-  padding: 5px;
+nav input {
+  padding: 7px;
   border-radius: 5px;
   border: 1px solid #aaa;
 }
@@ -35,11 +40,20 @@ body {
   border-radius: 5px;
   background: #ccc;
   cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background: #bbb;
 }
 
 .btn.primary {
   background: #0077b6;
   color: white;
+}
+
+.btn.primary:hover {
+  background: #005f87;
 }
 
 .welcome {
@@ -87,12 +101,27 @@ body {
   text-align: center;
   border-radius: 10px;
   overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.book-card:hover {
+  transform: scale(1.05);
 }
 
 .book-card img {
   width: 100%;
   height: 220px;
   object-fit: cover;
+}
+
+.book-card h4 {
+  margin: 10px 5px 5px 5px;
+  font-size: 1em;
+}
+
+.book-card p {
+  color: #666;
+  margin: 0 0 10px 0;
 }
 
 .book-card button {
@@ -105,6 +134,21 @@ body {
   border-radius: 0 0 10px 10px;
 }
 
-.book-card button.borrowed {
-  background: #555;
+.book-card button:hover {
+  background: #005f87;
+}
+
+@media screen and (max-width: 600px) {
+  .features {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  nav {
+    flex-wrap: wrap;
+  }
+
+  .book-card {
+    width: 45%;
+  }
 }
